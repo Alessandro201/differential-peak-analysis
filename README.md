@@ -94,8 +94,10 @@ The recommended way to install all the dependencies is using [pixi](https://gith
 ```bash
 git clone https://github.com/Alessandro201/differential-peak-analysis.git
 cd differential-peak-analysis
-pixi install
+pixi shell
 ```
+> [!IMPORTANT]
+> Remember to call `pixi shell` from the project folder to activate the virtual environment and let the script access the dependencies
 
 To install the reference genome for HOMER you need to run:
 
