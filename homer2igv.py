@@ -2,13 +2,7 @@
 
 import argparse
 import os
-from icecream import ic
 from pathlib import Path
-
-import pandas as pd
-import numpy as np
-
-ic.configureOutput(includeContext=True)
 
 
 ### Parse cli arguments
@@ -105,6 +99,10 @@ else:
 output_name.parent.mkdir(exist_ok=True, parents=True)
 
 
+# Defer the slow import of pandas and numpy to after the arguments are parsed
+import pandas as pd
+import numpy as np
+
 ### Read input files
 df = pd.read_csv(input_file, delimiter="\t")
 # The first column in the output from HOMER is `PeakID [COMMAND RUN]`, remove the cmd and keep only `peakid`
@@ -163,12 +161,12 @@ if args.tss:
     df = df[df["tss"].abs() <= args.tss]
 
 if args.type:
-    df = df[df["feature"] in args.type.split(',')]
+    df = df[df["feature"] in args.type.split(",")]
 
 if args.no_type:
-    df = df[df["feature"] not in args.no_type.split(',')]
+    df = df[df["feature"] not in args.no_type.split(",")]
 
-tsv_output = output_name.with_suffix('.tsv')
+tsv_output = output_name.with_suffix(".tsv")
 print(f"TSV file saved: {tsv_output}")
 df.to_csv(
     tsv_output,
@@ -212,8 +210,6 @@ df = df[
         "attribute",
     ]
 ]
-gtf_output = output_name.with_suffix('.gtf')
+gtf_output = output_name.with_suffix(".gtf")
 print(f"GTF file saved: {gtf_output}")
-df.to_csv(
-    gtf_output, sep="\t", header=False, index=False, encoding="utf-8"
-)
+df.to_csv(gtf_output, sep="\t", header=False, index=False, encoding="utf-8")
