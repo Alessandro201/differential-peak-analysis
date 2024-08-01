@@ -26,7 +26,7 @@ This repository contains utility scripts to perform differential peak analysis.
 ## Samplesheet preparation
 
 DiffBind requires a `samplesheet.csv` containing the `.bam` alignments and the peaks called of each sample. 
-The example below uses the output from the [nf-core cutandrun](https://nf-co.re/cutandrun/3.2.2/) pipeline:
+The example below uses the output from the [nf-core/cutandrun](https://nf-co.re/cutandrun/3.2.2/) pipeline:
 
 ```csv
 SampleID  ,Tissue  ,Factor   ,Condition ,Treatment  ,Replicate ,bamReads                                                                                  ,Peaks                                                                                    ,PeakCaller
