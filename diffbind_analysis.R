@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(argparser, quietly = TRUE)
+library(stringr, quietly = TRUE)
 
 # Create a parser
 p <- arg_parser("Launch DiffBind on the data and perform the plots")
@@ -9,17 +10,29 @@ p <- arg_parser("Launch DiffBind on the data and perform the plots")
 p <- add_argument(p, "samplesheet", help = "Samplesheet in csv format", type = "character", nargs = 1)
 p <- add_argument(p, "--outdir", help = "Output directory", default = ".", type = "character", nargs=1)
 p <- add_argument(p, "--contrast", help = "Set the baseline condition, eg. the denominator in the fold change", default = "control", type = "character", nargs=1)
+p <- add_argument(p, "--summit", help = "Re-center each peak interval around its point of highest pileup. 
+    '--summit 200' will select -200/+200 bp around the point of highest pileup giving peaks of 401bp.
+    '--summit false' will disable the re-centering.
+    '--summit median' will create peaks about the median peak size of all samples.
+    Choices: ['false', 'median', INTEGER]", default = "200", type = "character", nargs=1)
+
 
 # Parse the command line arguments
 args <- parse_args(p)
 
 sample_sheet <- read.csv(args$samplesheet)
-if !(args$contrast in sample_sheet$condition) {
+sample_sheet$Condition <- str_trim(sample_sheet$Condition)
+if (!args$contrast %in% sample_sheet$Condition) {
     print("The contrast you have inserted is not present in the 'condition' column of the samplesheet")
-    exit(1)
+    stop()
 }
 
-
+contains_only_numbers <- function(x) !grepl("\\D", x)
+summit <- args$summit
+if (!str_to_lower(summit) %in% c("false", "median") & !contains_only_numbers(summit) ) {
+    print(paste0("The --summit parameter given is not a valid option. Available 'false', 'median' or a whole number, given: ", summit))
+    stop()
+}
 
 library(DiffBind, quietly = TRUE)
 library(profileplyr, quietly = TRUE)
@@ -48,7 +61,28 @@ plot(me1_og)
 dev.off()
 
 
-me1 <- dba.count(me1_og)
+if (str_to_lower(summit) == "false") {
+    summit <- FALSE
+} else if (str_to_lower(summit) == "median") {
+    print("Computing the median length of all peaks")
+    library(GenomicRanges)
+    peak_lengths <- list()
+    for (file_name in sample_sheet$Peaks) {
+        file_name <- str_trim(file_name)
+        bedfile <- read.table(file_name, header=FALSE, col.names=c("chr", "start", "end", "name", "score"), stringsAsFactors=FALSE)
+        peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = TRUE)
+        peaks$length <- width(peaks)
+        peak_lengths <- append(peak_lengths, peaks$length)
+    }
+
+    summit <- median(peak_lengths)
+    print(paste0("Peaks median length of all samples: ", summit))
+} else {
+    summit <- as.numeric(summit)
+}
+
+
+me1 <- dba.count(me1_og, summit=summit)
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
