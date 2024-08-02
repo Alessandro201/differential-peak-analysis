@@ -1,0 +1,7 @@
+# BiocManager::install("GenomesInfoDb")
+# BiocManager::install("TxDd.Hsapiens.UCSC.hg19.knownGene")
+# BiocManager::install("TxDd.Hsapiens.UCSC.hg38.knownGene")
+# BiocManager::install("TxDd.Mmusculus.UCSC.mm10.knownGene")
+# BiocManager::install("TxDd.Mmusculus.UCSC.mm9.knownGene")
+BiocManager::install("profileplyr")
+# BiocManager::install("DiffBind")

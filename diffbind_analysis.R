@@ -16,10 +16,10 @@ p <- add_argument(p, "--summit", help = "Re-center each peak interval around its
     '--summit median' will create peaks about the median peak size of all samples.
     Choices: ['false', 'median', INTEGER]", default = "200", type = "character", nargs=1)
 
-
 # Parse the command line arguments
 args <- parse_args(p)
 
+# Check that the control given is present in the samplesheet
 sample_sheet <- read.csv(args$samplesheet)
 sample_sheet$Condition <- str_trim(sample_sheet$Condition)
 if (!args$contrast %in% sample_sheet$Condition) {
@@ -27,6 +27,7 @@ if (!args$contrast %in% sample_sheet$Condition) {
     stop()
 }
 
+# Validate the summit given
 contains_only_numbers <- function(x) !grepl("\\D", x)
 summit <- args$summit
 if (!str_to_lower(summit) %in% c("false", "median") & !contains_only_numbers(summit) ) {
@@ -34,6 +35,12 @@ if (!str_to_lower(summit) %in% c("false", "median") & !contains_only_numbers(sum
     stop()
 }
 
+# Remove one trailing slashes and create outdir
+args$outdir <- gsub("/$", "", args$outdir)
+args$outdir <- gsub("\\$", "", args$outdir)
+dir.create(args$outdir, showWarnings = FALSE)
+
+# Load heavy libraries later
 library(DiffBind, quietly = TRUE)
 library(profileplyr, quietly = TRUE)
 library(data.table, quietly = TRUE)
@@ -49,18 +56,13 @@ me1_og <- dba(sampleSheet = args$samplesheet)
 #     + dba.analyze()
 
 
-# Remove one trailing slashes
-args$outdir <- gsub("/$", "", args$outdir)
-args$outdir <- gsub("\\$", "", args$outdir)
-dir.create(args$outdir, showWarnings = FALSE)
-
-
 print("Saving correlation heatmap generated using the called peaks as correlation_hm_peaks_occupancy.pdf")
 pdf(file.path(args$outdir, "correlation_hm_peaks_occupancy.pdf"))
 plot(me1_og)
 dev.off()
 
 
+<<<<<<< Updated upstream
 if (str_to_lower(summit) == "false") {
     summit <- FALSE
 } else if (str_to_lower(summit) == "median") {
@@ -77,12 +79,31 @@ if (str_to_lower(summit) == "false") {
 
     summit <- median(peak_lengths)
     print(paste0("Peaks median length of all samples: ", summit))
+=======
+
+
+print(me1_og)
+
+if (str_to_lower(summit) == "false") {
+    summit <- FALSE
+} else if (str_to_lower(summit) == "median") {
+
+
+
+    summit <- median(dba.)
+>>>>>>> Stashed changes
 } else {
     summit <- as.numeric(summit)
 }
 
 
+<<<<<<< Updated upstream
 me1 <- dba.count(me1_og, summit=summit)
+=======
+
+
+me1 <- dba.count(me1_og)
+>>>>>>> Stashed changes
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
