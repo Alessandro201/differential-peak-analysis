@@ -17,7 +17,7 @@ RUN micromamba config set extract_threads 1 && \
 
 ENV PATH /opt/conda/envs/differential-analysis/bin:$PATH
 
-RUN Rscript /tmp/install-dependencies.R
+RUN R -e "BiocManager::install('profileplyr'); if (!library(profileplyr, logical.return=T)) quit(status=10)" 
 
 RUN /opt/conda/envs/differential-analysis/share/homer/configureHomer.pl -install hg38                                                                                                                                  482ms  Mon 05 Aug 2024 10:58:07 AM CEST
 
