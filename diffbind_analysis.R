@@ -8,13 +8,13 @@ p <- arg_parser("Launch DiffBind on the data and perform the plots")
 
 # Add command line arguments
 p <- add_argument(p, "samplesheet", help = "Samplesheet in csv format", type = "character", nargs = 1)
-p <- add_argument(p, "--outdir", help = "Output directory", default = ".", type = "character", nargs=1)
-p <- add_argument(p, "--contrast", help = "Set the baseline condition, eg. the denominator in the fold change", default = "control", type = "character", nargs=1)
-p <- add_argument(p, "--summit", help = "Re-center each peak interval around its point of highest pileup. 
+p <- add_argument(p, "--outdir", help = "Output directory", default = ".", type = "character", nargs = 1)
+p <- add_argument(p, "--contrast", help = "Set the baseline condition, eg. the denominator in the fold change", default = "control", type = "character", nargs = 1)
+p <- add_argument(p, "--summit", help = "Re-center each peak interval around its point of highest pileup.
     '--summit 200' will select -200/+200 bp around the point of highest pileup giving peaks of 401bp.
     '--summit false' will disable the re-centering.
     '--summit median' will create peaks about the median peak size of all samples.
-    Choices: ['false', 'median', INTEGER]", default = "200", type = "character", nargs=1)
+    Choices: ['false', 'median', INTEGER]", default = "200", type = "character", nargs = 1)
 
 
 # Parse the command line arguments
@@ -29,7 +29,7 @@ if (!args$contrast %in% sample_sheet$Condition) {
 
 contains_only_numbers <- function(x) !grepl("\\D", x)
 summit <- args$summit
-if (!str_to_lower(summit) %in% c("false", "median") & !contains_only_numbers(summit) ) {
+if (!str_to_lower(summit) %in% c("false", "median") && !contains_only_numbers(summit)) {
     print(paste0("The --summit parameter given is not a valid option. Available 'false', 'median' or a whole number, given: ", summit))
     stop()
 }
@@ -69,7 +69,7 @@ if (str_to_lower(summit) == "false") {
     peak_lengths <- list()
     for (file_name in sample_sheet$Peaks) {
         file_name <- str_trim(file_name)
-        bedfile <- read.table(file_name, header=FALSE, col.names=c("chr", "start", "end", "name", "score"), stringsAsFactors=FALSE)
+        bedfile <- read.table(file_name, header = FALSE, col.names = c("chr", "start", "end", "name", "score"), stringsAsFactors = FALSE)
         peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = TRUE)
         peaks$length <- width(peaks)
         peak_lengths <- append(peak_lengths, peaks$length)
@@ -82,7 +82,7 @@ if (str_to_lower(summit) == "false") {
 }
 
 
-me1 <- dba.count(me1_og, summit=summit)
+me1 <- dba.count(me1_og, summit = summit)
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
