@@ -46,10 +46,10 @@ These are the parameters of `diffbind_analysis.R`:
 
 - `-o` is the output directory in which the significant peaks and the plots will be saved
 - `-c` defined the base condition, hence the denominator in the fold change. The defualt is `control`
-- `-s` defines how the summit will be computed. DiffBind by default shortens the peaks around ±200bp from the summit, hence 401 total. Depending on the histon marks, it may be appropiate or not. Choices:
+- `-s` defines how the summit will be computed. DiffBind by default centers the peaks keeping -200bp/+200bp from the summit, hence each peak will have 401bp total. Depending on the histon marks, it may be appropriate or not:
   - `-s INTEGER` choose a specific distance from the summit
   - `-s false` disable the centering of the peaks
-  - `-s media` use the median peak length. **_BEWARE_** that the median is computed on all samples, thus if you have multiple histon marks and you want to use the median peak length, you should use a samplesheet per histon mark.
+  - `-s median` use the median peak length. **_BEWARE_** that the median is computed on all samples, thus if you have multiple histon marks and you want to use the median peak length, you should use a samplesheet per histon mark.
 
 ```text
 $ diffbind_analysis.R -h
