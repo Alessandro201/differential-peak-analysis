@@ -46,10 +46,10 @@ These are the parameters of `diffbind_analysis.R`:
 
 - `-o` is the output directory in which the significant peaks and the plots will be saved
 - `-c` defined the base condition, hence the denominator in the fold change. The defualt is `control`
-- `-s` defines how the summit will be computed. DiffBind by default centers the peaks keeping -200bp/+200bp from the summit, hence each peak will have 401bp total. Depending on the histon marks, it may be appropriate or not:
+- `-s` defines how the summit will be computed. DiffBind by default shortens the peaks around ±200bp from the summit, hence 401 total. Depending on the histon marks, it may be appropiate or not. Choices:
   - `-s INTEGER` choose a specific distance from the summit
   - `-s false` disable the centering of the peaks
-  - `-s median` use the median peak length. **_BEWARE_** that the median is computed on all samples, thus if you have multiple histon marks and you want to use the median peak length, you should use a samplesheet per histon mark.
+  - `-s media` use the median peak length. **_BEWARE_** that the median is computed on all samples, thus if you have multiple histon marks and you want to use the median peak length, you should use a samplesheet per histon mark.
 
 ```text
 $ diffbind_analysis.R -h
@@ -116,25 +116,24 @@ docker run --rm -it [CONTAINER NAME] bash
 
 To perform the analysis on the current directory, using the samplesheet from the example above, do:
 
-```text
-CURRENT_DIRECTORY/
-├── cutandrun/
-│   └── results/
-│       ├── 02_alignment/
-│       │   └── ...
-│       └── 03_peak_calling/
-│           └── ...
-├── samplesheet.csv
-└── gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz
-```
-
 ```bash
+# CURRENT_DIRECTORY/
+# ├── cutandrun/
+# │   └── results/
+# │       ├── 02_alignment/
+# │       │   └── ...
+# │       └── 03_peak_calling/
+# │           └── ...
+# ├── samplesheet.csv
+# └── gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz
+
 docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] diffbind_analysis.R samplesheet.csv -o diffbind_results/ -c control
 docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] bash -c 'annotatePeaks.pl diffbind_results/differentially_bound_sites.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > differentially_bound_sites_annotated.tsv'
 docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] homer2igv.py -d diffbind_results/differentially_bound_sites.tsv differentially_bound_sites_annotated.tsv
 ```
 
-> [!NOTE] > `annotatePeaks.pl` outputs the file to STDOUT, hence we need to redirect it to a file using `>`. However, while all the commands are passed to the container, the redirection sign is excluded and puts all the output of the command executed by docker (in this case `annotatePeaks.pl`) in the specified file. Given that in the example above we mounted the current directory on the container because we would like to keep all the outputs, it doesn't change the final output. However if we were to mount a directory which is not the current one, the output would be saved in the current directory and not in the mounted one. This is why in the example above the command is passed as a string to bash, to be executed inside the container as expected.
+> [!NOTE]
+> `annotatePeaks.pl` outputs the file to STDOUT, hence we need to redirect it to a file using `>`. However, while all the commands are passed to the container, the redirection sign and what come after is excluded. Thus we need to pass the whole command as a string to bash so that it can be executed fully from within the container as expected.
 
 ### Container building
 
