@@ -107,11 +107,11 @@ filters:
 
 ## Software installation
 
-You can find a docker container with the software already installed at [CONTAINER POSITION]. To download it and run an interactive shell do:
+You can find a docker container with the software already installed at alessandro201/differential-peak-analysis. To download it and run an interactive shell do:
 
 ```bash
-docker pull [CONTAINER POSITION]
-docker run --rm -it [CONTAINER NAME] bash
+docker pull alessandro201/differential-peak-analysis
+docker run --rm -it alessandro201/differential-peak-analysis bash
 ```
 
 To perform the analysis on the current directory, using the samplesheet from the example above, do:
@@ -127,9 +127,9 @@ To perform the analysis on the current directory, using the samplesheet from the
 # ├── samplesheet.csv
 # └── gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz
 
-docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] diffbind_analysis.R samplesheet.csv -o diffbind_results/ -c control
-docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] bash -c 'annotatePeaks.pl diffbind_results/differentially_bound_sites.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > differentially_bound_sites_annotated.tsv'
-docker run --rm -it -v .:/mnt -w /mnt [CONTAINER NAME] homer2igv.py -d diffbind_results/differentially_bound_sites.tsv differentially_bound_sites_annotated.tsv
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis diffbind_analysis.R samplesheet.csv -o diffbind_results/ -c control
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis bash -c 'annotatePeaks.pl diffbind_results/differentially_bound_sites.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > differentially_bound_sites_annotated.tsv'
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis homer2igv.py -d diffbind_results/differentially_bound_sites.tsv differentially_bound_sites_annotated.tsv
 ```
 
 > [!NOTE]
