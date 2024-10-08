@@ -219,11 +219,11 @@ db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
 # Rename the first column 'seqnames' to 'Chr'
 fwrite(db, file = file.path(args$outdir, "differentially_bound_sites.tsv"), sep = "\t")
 
-
+conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$control])
 num_db_sites <- sprintf(
     "Number of enriched sites in '%s' samples: %s",
-    dba_samples$Condition[dba_samples$Condition != args$control],
-    sum(dba_samples.DB$Fold > 0),
+    paste(conditions, collapse = ", "),
+    sum(dba_samples.DB$Fold > 0)
 )
 num_db_sites <- sprintf(
     "Number of enriched sites in '%s' samples: %s",
