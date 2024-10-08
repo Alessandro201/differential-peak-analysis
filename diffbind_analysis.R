@@ -221,8 +221,8 @@ fwrite(db, file = file.path(args$outdir, "differentially_bound_sites.tsv"), sep 
 
 
 num_db_sites <- sprintf(
-    "Number of enriched sites in control samples: %s",
-    sample_sheet$Condition[sample_sheet$Condition != args$control],
+    "Number of enriched sites in '%s' samples: %s",
+    args$control,
     sum(dba_samples.DB$Fold > 0),
 )
 num_db_sites <- sprintf(
