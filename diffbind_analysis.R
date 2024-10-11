@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+# version: 0.1.1
+# author: Alessandro Poletti
+# GitHub: https://github.com/alessandro201
+
 
 suppressMessages(library(argparser, quietly = TRUE))
 suppressMessages(library(stringr, quietly = TRUE))

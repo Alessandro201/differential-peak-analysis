@@ -18,5 +18,3 @@ RUN Rscript /tmp/install_dependencies.R
 
 RUN /opt/conda/envs/differential-analysis/share/homer/configureHomer.pl -install hg38
 
-COPY --chown=$MAMBA_USER:$MAMBA_USER ./diffbind_analysis.R /usr/bin/diffbind_analysis.R
-COPY --chown=$MAMBA_USER:$MAMBA_USER ./homer2igv.py /usr/bin/homer2igv.py
