@@ -150,8 +150,9 @@ if (str_to_lower(args$blacklist) == "true") {
 
 print("Loading Samplesheet")
 dba_samples <- dba(sampleSheet = sample_sheet)
+
+print("Applying blacklist")
 dba_samples <- dba.blacklist(dba_samples, blacklist = blacklist)
-dba_samples$config$greylist.pval <- 0.999
 
 
 # Overlap rate of peaks between the replicates. It helps to decide how many replicate to use to define a consensus
@@ -191,15 +192,14 @@ if (args$peakset) {
     # Load the consensus peakset
     dba_consensus <- dba(args$peakset, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
-    dba_samples <- dba.count(dba_samples, summit = summit, peaks = consensus_peaks)
 } else {
     # Compute the consensus peakset following the --minOverlap specified
     dba_consensus <- dba.peakset(dba_samples, consensus = -DBA_REPLICATE, minOverlap = args$minOverlap)
     dba_consensus <- dba(dba_consensus, mask = dba_consensus$masks$Consensus, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
-    dba_samples <- dba.count(dba_samples, summit = summit, peaks = consensus_peaks)
 }
 
+dba_samples <- dba.count(dba_samples, summit = summit, peaks = consensus_peaks, bParallel = TRUE)
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
