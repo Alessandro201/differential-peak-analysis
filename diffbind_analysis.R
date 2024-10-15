@@ -246,8 +246,8 @@ names(db)[names(db) == "seqnames"] <- "Chr"
 # cols: Chr, start, end, PeakId, Fold, strand, Conc, Conc_BULK, Conc_TM4, p.value, FDR, width
 db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
 
-fwrite(db[db$Fold >= 0], file = file.path(args$outdir, "enriched_sites_condition.tsv"), sep = "\t")
-fwrite(db[db$Fold < 0], file = file.path(args$outdir, "enriched_sites_control.tsv"), sep = "\t")
+fwrite(db[, db$Fold >= 0], file = file.path(args$outdir, "enriched_sites_condition.tsv"), sep = "\t")
+fwrite(db[, db$Fold < 0], file = file.path(args$outdir, "enriched_sites_control.tsv"), sep = "\t")
 
 conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$control])
 num_enriched_sites_condition <- paste(
