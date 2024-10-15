@@ -189,7 +189,7 @@ if (summit == "false") {
 
 if (!is.na(args$consensus)) {
     # Load the consensus peakset
-    dba_consensus <- dba(args$consensus, minOverlap = 1)
+    dba_consensus <- dba(sampleSheet=args$consensus, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 } else {
     # Compute the consensus peakset following the --minOverlap specified
@@ -240,26 +240,30 @@ print(dba_samples.DB)
 db <- dba_samples.DB
 db$PeakId <- names(db)
 db <- data.frame(db)
-names(db)[names(db) == "seqnames"] <- "Chr"
-
-# Reorder columns to move PeakId at the start and have the first columns as: PeakId, Chr, start, end, strand
-db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
 # Rename the first column 'seqnames' to 'Chr'
-fwrite(db, file = file.path(args$outdir, "differentially_bound_sites.tsv"), sep = "\t")
+names(db)[names(db) == "seqnames"] <- "Chr"
+# Reorder columns to move PeakId at the start and have the first columns as:
+# cols: Chr, start, end, PeakId, Fold, strand, Conc, Conc_BULK, Conc_TM4, p.value, FDR, width
+db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
+
+fwrite(db[db$Fold >= 0], file = file.path(args$outdir, "enriched_sites_condition.tsv"), sep = "\t")
+fwrite(db[db$Fold < 0], file = file.path(args$outdir, "enriched_sites_control.tsv"), sep = "\t")
 
 conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$control])
-num_db_sites <- sprintf(
+num_enriched_sites_condition <- paste(
     "Number of enriched sites in '%s' samples: %s",
     paste(conditions, collapse = ", "),
-    sum(dba_samples.DB$Fold > 0)
+    sum(dba_samples.DB$Fold >= 0)
 )
-num_db_sites <- sprintf(
+print(num_enriched_sites_condition)
+
+num_enriched_sites <- paste(
     "Number of enriched sites in '%s' samples: %s",
     args$control,
     sum(dba_samples.DB$Fold < 0)
 )
-print(num_db_sites)
-fwrite(list(num_db_sites), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
+print(num_enriched_sites)
+fwrite(paste(num_enriched_sites_condition, num_enriched_sites, sep="\n"), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
 
 
 print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
