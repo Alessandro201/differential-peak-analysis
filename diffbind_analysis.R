@@ -263,7 +263,7 @@ num_enriched_sites <- paste(
     sum(dba_samples.DB$Fold < 0)
 )
 print(num_enriched_sites)
-fwrite(paste(num_enriched_sites_condition, num_enriched_sites, sep="\n"), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
+fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep="\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
 
 
 print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
