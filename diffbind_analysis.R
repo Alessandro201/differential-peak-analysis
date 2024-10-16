@@ -174,7 +174,7 @@ if (summit == "false") {
     # Using consensus peaks to compute summit if given
     if (!is.na(args$consensus)) {
         print("Computing the median length of ALL CONSENSUS PEAKS.")
-        peak_files <- read.csv(args$consensus, sep = "\t", header = TRUE)$Peaks
+        peak_files <- read.csv(args$consensus, header = TRUE)$Peaks
     } else {
         print("Computing the median length of ALL THE PEAKS OF THE SAMPLES.")
         peak_files <- sample_sheet$Peaks
