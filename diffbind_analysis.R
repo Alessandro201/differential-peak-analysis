@@ -177,10 +177,8 @@ if (summit == "false") {
     for (file_name in sample_sheet$Peaks) {
         file_name <- str_trim(file_name)
         bedfile <- read.table(file_name, header = FALSE, stringsAsFactors = FALSE)
-
-        peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = FALSE)
-        peaks$length <- width(peaks)
-        peak_lengths <- append(peak_lengths, peaks$length)
+        peaks.width <- bedfile[, 3] - bedfile[, 2]
+        peak_lengths <- append(peak_lengths, peaks.width)
     }
     summit <- median(peak_lengths)
     print(paste0("Peaks median length of all samples: ", summit))
