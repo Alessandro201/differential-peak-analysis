@@ -171,12 +171,21 @@ dev.off()
 if (summit == "false") {
     summit <- FALSE
 } else if (summit == "median") {
-    print("Computing the median length of ALL THE PEAKS. THERE IS NO DISTINCTION BETWEEN THE SAMPLES")
-    library(GenomicRanges)
+    # Using consensus peaks to compute summit if given
+    if (!is.na(args$consensus)) {
+        print("Computing the median length of ALL CONSENSUS PEAKS.")
+        peak_files <- read.csv(args$consensus, sep = "\t", header = TRUE)$Peaks
+    } else {
+        print("Computing the median length of ALL THE PEAKS OF THE SAMPLES.")
+        peak_files <- sample_sheet$Peaks
+    }
+
     peak_lengths <- list()
-    for (file_name in sample_sheet$Peaks) {
+    for (file_name in peak_files) {
         file_name <- str_trim(file_name)
 
+
+        # Load the peaks and compute their width
         if (grepl("\\.xls$", file_name)) {
             xlsfile <- read.table(file_name, sep = "\t", header = TRUE)
             peaks.width <- xlsfile$end - xlsfile$start
