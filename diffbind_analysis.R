@@ -179,7 +179,7 @@ if (summit == "false") {
 
         if (grepl("\\.xls$", file_name)) {
             xlsfile <- read.table(file_name, sep = "\t", header = TRUE)
-            peaks_widths <- xlsfile$end - xlsfile$start
+            peaks.width <- xlsfile$end - xlsfile$start
         } else {
             bedfile <- read.table(file_name, sep = "\t", header = FALSE)
             peaks.width <- bedfile$V3 - bedfile$V2
