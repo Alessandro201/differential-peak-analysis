@@ -176,8 +176,8 @@ if (summit == "false") {
     peak_lengths <- list()
     for (file_name in sample_sheet$Peaks) {
         file_name <- str_trim(file_name)
-        bedfile <- read.table(file_name, header = FALSE, col.names = c("chr", "start", "end", "name", "score"), stringsAsFactors = FALSE)
-        peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = TRUE)
+        bedfile <- read.table(file_name, header = FALSE, stringsAsFactors = FALSE)
+        peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = FALSE)
         peaks$length <- width(peaks)
         peak_lengths <- append(peak_lengths, peaks$length)
     }
