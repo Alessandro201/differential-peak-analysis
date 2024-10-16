@@ -176,8 +176,15 @@ if (summit == "false") {
     peak_lengths <- list()
     for (file_name in sample_sheet$Peaks) {
         file_name <- str_trim(file_name)
-        bedfile <- read.table(file_name, header = FALSE, stringsAsFactors = FALSE)
-        peaks.width <- bedfile[, 3] - bedfile[, 2]
+
+        if (grepl("\\.xls$", file_name)) {
+            xlsfile <- read.table(file_name, sep = "\t", header = TRUE)
+            peaks_widths <- xlsfile$end - xlsfile$start
+        } else {
+            bedfile <- read.table(file_name, sep = "\t", header = FALSE)
+            peaks.width <- bedfile$V3 - bedfile$V2
+        }
+
         peak_lengths <- append(peak_lengths, peaks.width)
     }
     summit <- median(peak_lengths)
