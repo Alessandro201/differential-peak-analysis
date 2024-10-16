@@ -188,7 +188,7 @@ if (summit == "false") {
 
 if (!is.na(args$consensus)) {
     # Load the consensus peakset
-    dba_consensus <- dba(sampleSheet=args$consensus, minOverlap = 1)
+    dba_consensus <- dba(sampleSheet = args$consensus, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 } else {
     # Compute the consensus peakset following the --minOverlap specified
@@ -262,7 +262,7 @@ num_enriched_sites <- paste(
     sum(dba_samples.DB$Fold < 0)
 )
 print(num_enriched_sites)
-fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep="\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
+fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
 
 
 print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
