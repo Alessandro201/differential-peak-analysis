@@ -197,7 +197,9 @@ if (summit == "false") {
         peak_lengths <- append(peak_lengths, peaks.width)
     }
     summit <- median(unlist(peak_lengths))
-    print(paste0("Peaks median length of all samples: ", summit))
+    print(paste("Median peaks length:", summit))
+    summit <- floor(summit / 2)
+    print(paste("Using summit:", summit))
 } else {
     summit <- as.numeric(summit)
 }
