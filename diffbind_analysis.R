@@ -89,18 +89,43 @@ for (bam in sample_sheet$bamReads) {
 
 for (peak in sample_sheet$Peaks) {
     if (!file.exists(peak)) {
-        cat("The following Peak files does not exists:", peak, "\n")
+        cat("The following peaks file does not exists:", peak, "\n")
         cat("Current working directory:", getwd(), "\n")
         quit()
     }
 }
+
+if (!is.na(args$consensus)) {
+    consensus_samplesheet <- read.csv(args$consensus)
+    consensus_samplesheet$bamReads <- str_trim(consensus_samplesheet$bamReads)
+    consensus_samplesheet$Peaks <- str_trim(consensus_samplesheet$Peaks)
+    consensus_samplesheet$Condition <- str_trim(consensus_samplesheet$Condition)
+
+    for (bam in consensus_samplesheet$bamReads) {
+        if (!file.exists(bam)) {
+            cat("The following BAM files does not exists:", bam, "\n")
+            cat("Current working directory:", getwd(), "\n")
+            quit()
+        }
+    }
+
+    for (peak in consensus_samplesheet$Peaks) {
+        if (!file.exists(peak)) {
+            cat("The following peaks file does not exists:", peak, "\n")
+            cat("Current working directory:", getwd(), "\n")
+            quit()
+        }
+    }
+}
+
+
 
 # Remove one trailing slashes and create outdir
 args$outdir <- gsub("/$", "", args$outdir)
 args$outdir <- gsub("\\$", "", args$outdir)
 dir.create(args$outdir, showWarnings = FALSE)
 
-# Load heavy libraries later
+# Load heavy libraries 
 print("Loading libraries, it may take a while")
 suppressMessages(library(DiffBind, quietly = TRUE))
 suppressMessages(library(profileplyr, quietly = TRUE))
@@ -174,7 +199,7 @@ if (summit == "false") {
     # Using consensus peaks to compute summit if given
     if (!is.na(args$consensus)) {
         print("Computing the median length of ALL CONSENSUS PEAKS.")
-        peak_files <- read.csv(args$consensus, header = TRUE)$Peaks
+        peak_files <- consensus_samplesheet$Peaks
     } else {
         print("Computing the median length of ALL THE PEAKS OF THE SAMPLES.")
         peak_files <- sample_sheet$Peaks
@@ -204,9 +229,9 @@ if (summit == "false") {
     summit <- as.numeric(summit)
 }
 
-if (!is.na(args$consensus)) {
+if (exists("consensus_samplesheet")) {
     # Load the consensus peakset
-    dba_consensus <- dba(sampleSheet = args$consensus, minOverlap = 1)
+    dba_consensus <- dba(sampleSheet = consensus_samplesheet, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 } else {
     # Compute the consensus peakset following the --minOverlap specified
