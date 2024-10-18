@@ -215,7 +215,9 @@ if (!is.na(args$consensus)) {
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 }
 
+
 dba_samples <- dba.count(dba_samples, summit = summit, peaks = consensus_peaks, bParallel = TRUE)
+
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
