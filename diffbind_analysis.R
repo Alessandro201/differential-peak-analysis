@@ -181,7 +181,7 @@ if (summit == "false") {
         peaks$length <- width(peaks)
         peak_lengths <- append(peak_lengths, peaks$length)
     }
-    summit <- median(peak_lengths)
+    summit <- round(median(peak_lengths))
     print(paste0("Peaks median length of all samples: ", summit))
 } else {
     summit <- as.numeric(summit)
@@ -198,7 +198,9 @@ if (!is.na(args$consensus)) {
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 }
 
+
 dba_samples <- dba.count(dba_samples, summit = summit, peaks = consensus_peaks, bParallel = TRUE)
+
 
 # Save plot as pdf
 print("Saving correlation heatmap generated using the affinity (n. of reads in consensous peaks, I think) as correlation_hm_peaks_affinity.pdf")
