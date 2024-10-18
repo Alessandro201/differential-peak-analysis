@@ -171,25 +171,42 @@ dev.off()
 if (summit == "false") {
     summit <- FALSE
 } else if (summit == "median") {
-    print("Computing the median length of ALL THE PEAKS. THERE IS NO DISTINCTION BETWEEN THE SAMPLES")
-    library(GenomicRanges)
-    peak_lengths <- list()
-    for (file_name in sample_sheet$Peaks) {
-        file_name <- str_trim(file_name)
-        bedfile <- read.table(file_name, header = FALSE, col.names = c("chr", "start", "end", "name", "score"), stringsAsFactors = FALSE)
-        peaks <- makeGRangesFromDataFrame(bedfile, keep.extra.columns = TRUE)
-        peaks$length <- width(peaks)
-        peak_lengths <- append(peak_lengths, peaks$length)
+    # Using consensus peaks to compute summit if given
+    if (!is.na(args$consensus)) {
+        print("Computing the median length of ALL CONSENSUS PEAKS.")
+        peak_files <- read.csv(args$consensus, header = TRUE)$Peaks
+    } else {
+        print("Computing the median length of ALL THE PEAKS OF THE SAMPLES.")
+        peak_files <- sample_sheet$Peaks
     }
-    summit <- round(median(peak_lengths))
-    print(paste0("Peaks median length of all samples: ", summit))
+
+    peak_lengths <- list()
+    for (file_name in peak_files) {
+        file_name <- str_trim(file_name)
+
+
+        # Load the peaks and compute their width
+        if (grepl("\\.xls$", file_name)) {
+            xlsfile <- read.table(file_name, sep = "\t", header = TRUE)
+            peaks.width <- xlsfile$end - xlsfile$start
+        } else {
+            bedfile <- read.table(file_name, sep = "\t", header = FALSE)
+            peaks.width <- bedfile$V3 - bedfile$V2
+        }
+
+        peak_lengths <- append(peak_lengths, peaks.width)
+    }
+    summit <- median(unlist(peak_lengths))
+    print(paste("Median peaks length:", summit))
+    summit <- floor(summit / 2)
+    print(paste("Using summit:", summit))
 } else {
     summit <- as.numeric(summit)
 }
 
 if (!is.na(args$consensus)) {
     # Load the consensus peakset
-    dba_consensus <- dba(sampleSheet=args$consensus, minOverlap = 1)
+    dba_consensus <- dba(sampleSheet = args$consensus, minOverlap = 1)
     consensus_peaks <- dba.peakset(dba_consensus, bRetrieve = TRUE)
 } else {
     # Compute the consensus peakset following the --minOverlap specified
@@ -265,7 +282,7 @@ num_enriched_sites <- paste(
     sum(dba_samples.DB$Fold < 0)
 )
 print(num_enriched_sites)
-fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep="\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
+fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
 
 
 print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
