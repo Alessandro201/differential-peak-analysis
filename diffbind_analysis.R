@@ -13,7 +13,7 @@ p <- arg_parser("Launch DiffBind on the data and perform the plots")
 # Add command line arguments
 p <- add_argument(p, "samplesheet", help = "Samplesheet in csv format", type = "character", nargs = 1)
 p <- add_argument(p, "--outdir", help = "Output directory", default = ".", type = "character", nargs = 1)
-p <- add_argument(p, "--contrast", help = "Set the baseline condition, eg. the denominator in the fold change", default = "control", type = "character", nargs = 1)
+p <- add_argument(p, "--tissue-contrast", help = "Set the baseline condition, eg. the denominator in the fold change. You should have two distinct tissues, and you should specifuy the one you want as baseline", default = "BULK", type = "character", nargs = 1)
 p <- add_argument(p, "--summit", help = "Re-center each peak interval around its point of highest pileup.
     '--summit 200' will select -200/+200 bp around the point of highest pileup giving peaks of 401bp.
     '--summit false' will disable the re-centering.
@@ -239,7 +239,7 @@ dba_samples <- dba.normalize(dba_samples)
 
 
 print("Modeling study design based on Condition and performing the differential analysis")
-dba_samples <- dba.contrast(dba_samples, reorderMeta = list(Condition = args$contrast))
+dba_samples <- dba.contrast(dba_samples, reorderMeta = list(Tissue = args$tissue_contrast), minMembers = 2)
 dba_samples <- dba.analyze(dba_samples)
 
 
