@@ -62,7 +62,7 @@ if (!is.na(args$consensus) && !file.exists(args$consensus)) {
 # Check that the control given is present in the samplesheet
 sample_sheet <- read.csv(args$samplesheet)
 sample_sheet$Condition <- str_trim(sample_sheet$Condition)
-if (!args$contrast %in% sample_sheet$Condition) {
+if (!args$tissue_contrast %in% sample_sheet$Condition) {
     print("The contrast you have inserted is not present in the 'condition' column of the samplesheet")
     stop()
 }
