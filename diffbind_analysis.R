@@ -125,7 +125,7 @@ args$outdir <- gsub("/$", "", args$outdir)
 args$outdir <- gsub("\\$", "", args$outdir)
 dir.create(args$outdir, showWarnings = FALSE)
 
-# Load heavy libraries 
+# Load heavy libraries
 print("Loading libraries, it may take a while")
 suppressMessages(library(DiffBind, quietly = TRUE))
 suppressMessages(library(profileplyr, quietly = TRUE))
@@ -290,23 +290,22 @@ names(db)[names(db) == "seqnames"] <- "Chr"
 # cols: Chr, start, end, PeakId, Fold, strand, Conc, Conc_BULK, Conc_TM4, p.value, FDR, width
 db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
 
-fwrite(db[db$Fold >= 0, ], file = file.path(args$outdir, "enriched_sites_condition.bed"), sep = "\t")
-fwrite(db[db$Fold < 0, ], file = file.path(args$outdir, "enriched_sites_control.bed"), sep = "\t")
 
-conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$control])
-num_enriched_sites_condition <- paste(
+fwrite(db[db$Fold >= 0, ], file = file.path(args$outdir, "DER_TM4.bed"), sep = "\t")
+fwrite(db[db$Fold < 0, ], file = file.path(args$outdir, "DER_BULK.bed"), sep = "\t")
+
+conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$tissue_contrast])
+num_enriched_sites_condition <- sprintf(
     "Number of enriched sites in '%s' samples: %s",
     paste(conditions, collapse = ", "),
     sum(dba_samples.DB$Fold >= 0)
 )
-print(num_enriched_sites_condition)
 
-num_enriched_sites <- paste(
+num_enriched_sites <- sprintf(
     "Number of enriched sites in '%s' samples: %s",
-    args$control,
+    args$tissue_contrast,
     sum(dba_samples.DB$Fold < 0)
 )
-print(num_enriched_sites)
 fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
 
 
