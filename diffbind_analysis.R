@@ -61,8 +61,8 @@ if (!is.na(args$consensus) && !file.exists(args$consensus)) {
 
 # Check that the control given is present in the samplesheet
 sample_sheet <- read.csv(args$samplesheet)
-sample_sheet$Condition <- str_trim(sample_sheet$Condition)
-if (!args$tissue_contrast %in% sample_sheet$Condition) {
+sample_sheet$Tissue <- str_trim(sample_sheet$Tissue)
+if (!args$tissue_contrast %in% sample_sheet$Tissue) {
     print("The contrast you have inserted is not present in the 'condition' column of the samplesheet")
     stop()
 }
@@ -251,141 +251,174 @@ plot(dba_samples)
 dev.off()
 
 
-print("Showing the number of reads that are in consensous peaks: FRiP (Fraction of Reads in Peaks)")
-info <- dba.show(dba_samples)
-libsizes <- cbind(LibReads = info$Reads, FRiP = info$FRiP, PeakReads = round(info$Reads * info$FRiP))
-rownames(libsizes) <- info$ID
-libsizes
-fwrite(data.frame(libsizes, row.names = info$ID), file = file.path(args$outdir, "FRiP_per_sample.tsv"), sep = "\t", row.names = TRUE)
+
+
+perform_analyses <- function(dba_obj, output_dir) {
+    print("Showing the number of reads that are in consensous peaks: FRiP (Fraction of Reads in Peaks)")
+    info <- dba.show(dba_obj)
+    libsizes <- cbind(LibReads = info$Reads, FRiP = info$FRiP, PeakReads = round(info$Reads * info$FRiP))
+    rownames(libsizes) <- info$ID
+    libsizes
+    fwrite(data.frame(libsizes, row.names = info$ID), file = file.path(output_dir, "FRiP_per_sample.tsv"), sep = "\t", row.names = TRUE)
+
+
+    print("Modeling study design based on Condition and performing the differential analysis")
+    dba_obj <- dba.contrast(dba_obj, reorderMeta = list(Tissue = args$tissue_contrast), minMembers = 2)
+    dba_obj <- dba.analyze(dba_obj)
+
+
+    # Save plot as pdf
+    print("Saving correlation heatmap generated using only significantly differentially bound sites as correlation_hm_peaks_significant.pdf")
+    pdf(file.path(output_dir, "correlation_hm_peaks_significant.pdf"))
+    plot(dba_obj, contrast = 1)
+    dev.off()
+
+
+    print("Computing report of differentially bound sites...")
+    dba_samples.DB <- dba.report(dba_obj)
+    print(dba_samples.DB)
+
+
+    # Write differentially bound sites to a file in a format easy to read for HOMER annotation tool
+    db <- dba_samples.DB
+    db$PeakId <- names(db)
+    db <- data.frame(db)
+    # Rename the first column 'seqnames' to 'Chr'
+    names(db)[names(db) == "seqnames"] <- "Chr"
+    # Reorder columns to move PeakId at the start and have the first columns as:
+    # cols: Chr, start, end, PeakId, Fold, strand, Conc, Conc_BULK, Conc_TM4, p.value, FDR, width
+    db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
+
+
+    fwrite(db[db$Fold >= 0, ], file = file.path(output_dir, "DER_TM4.bed"), sep = "\t")
+    fwrite(db[db$Fold < 0, ], file = file.path(output_dir, "DER_BULK.bed"), sep = "\t")
+
+    conditions <- unique(dba_obj$Condition[dba_obj$Condition != args$tissue_contrast])
+    num_enriched_sites_condition <- sprintf(
+        "Number of enriched sites in '%s' samples: %s",
+        paste(conditions, collapse = ", "),
+        sum(dba_samples.DB$Fold >= 0)
+    )
+
+    num_enriched_sites <- sprintf(
+        "Number of enriched sites in '%s' samples: %s",
+        args$tissue_contrast,
+        sum(dba_samples.DB$Fold < 0)
+    )
+    fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(output_dir, "num_enriched_sites.txt"), quote = FALSE)
+
+
+    print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
+    pdf(file.path(output_dir, "pca_read_counts.pdf"))
+    dba.plotPCA(dba_obj, DBA_TISSUE, label = DBA_CONDITION)
+    dev.off()
+
+
+    print("Saving PCA plot of significantly differentially bound sites as pca_significant_sites.pdf")
+    pdf(file.path(output_dir, "pca_significant_sites.pdf"))
+    dba.plotPCA(dba_obj, contrast = 1, label = DBA_TISSUE)
+    dev.off()
+
+
+    print("Saving PCA plot showing where the replicates for each of the unique tissues lies as pca_replicates_by_tissue.pdf")
+    pdf(file.path(output_dir, "pca_replicates_by_tissue.pdf"))
+    dba.plotPCA(dba_obj, attributes = c(DBA_TISSUE, DBA_CONDITION), label = DBA_REPLICATE)
+    dev.off()
+
+    print("Saving MA plot of treated vs control samples as MA_treated_vs_control.pdf")
+    pdf(file.path(output_dir, "MA_treated_vs_control.pdf"))
+    dba.plotMA(dba_obj)
+    dev.off()
+
+
+    print("Saving MA plot of treated vs control samples with concentration of each sample groups as MA_treated_vs_control_with_concentration.pdf")
+    pdf(file.path(output_dir, "MA_treated_vs_control_with_concentration.pdf"))
+    dba.plotMA(dba_obj, bXY = TRUE)
+    dev.off()
+
+
+    print("Saving venn plot as venn_plot.pdf")
+    pdf(file.path(output_dir, "venn_plot.pdf"))
+    dba.plotVenn(dba_obj, contrast = 1, bDB = TRUE, bGain = TRUE, bLoss = TRUE, bAll = FALSE)
+    dev.off()
+
+
+    print("Saving venn plot with all counts as venn_plot_all.pdf")
+    pdf(file.path(output_dir, "venn_plot_all.pdf"))
+    dba.plotVenn(dba_obj, contrast = 1, bDB = TRUE, bGain = TRUE, bLoss = TRUE, bAll = TRUE)
+    dev.off()
+
+
+    print("Saving vulcano plot of log FoldChange as vulcano_plot.pdf")
+    pdf(file.path(output_dir, "vulcano_plot.pdf"))
+    dba.plotVolcano(dba_obj)
+    dev.off()
+
+
+    print("Saving boxplot of concentration of treated vs control samples as boxplot_treated_vs_control.pdf")
+    pdf(file.path(output_dir, "boxplot_treated_vs_control.pdf"))
+    pvals <- dba.plotBox(dba_obj)
+    dev.off()
+    fwrite(pvals, file = file.path(output_dir, "pvals_boxplot.tsv"), sep = "\t", row.names = TRUE)
+
+
+    print("Saving correlation heatmap of each binding site as correlation_hm_binding_sites.pdf")
+    pdf(file.path(output_dir, "correlation_hm_binding_sites.pdf"))
+    hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
+    dba.plotHeatmap(dba_obj, contrast = 1, correlations = FALSE, scale = "row", colScheme = hmap)
+    dev.off()
+
+
+    print("Saving profile plot of each binding site as profile_plot_binding_sites.pdf")
+    pdf(file.path(output_dir, "profile_plot_binding_sites.pdf"))
+    profiles <- dba.plotProfile(dba_obj)
+    dba.plotProfile(profiles)
+    dev.off()
+
+
+    print("Saving profile plot of each binding site of merged groups (TISSUE and REPLICATES) as profile_plot_group_binding_sites.pdf")
+    pdf(file.path(output_dir, "profile_plot_group_binding_sites.pdf"))
+    profiles <- dba.plotProfile(dba_obj, merge = c(DBA_TISSUE, DBA_REPLICATE))
+    dba.plotProfile(profiles)
+    dev.off()
+
+
+    print("Saving profile plot of each binding site of each sample as profile_plot_sample_binding_sites.pdf")
+    pdf(file.path(output_dir, "profile_plot_sample_binding_sites.pdf"))
+    profiles <- dba.plotProfile(dba_obj, merge = NULL)
+    dba.plotProfile(profiles)
+    dev.off()
+}
+
+
+# print("Normalizing based on sequencing depth")
+# dba_samples <- dba.normalize(dba_samples)
 
 
 print("Normalizing based on sequencing depth")
-dba_samples <- dba.normalize(dba_samples)
+output_dir <- file.path(args$outdir, "normalization_LibSize")
+dir.create(output_dir, showWarnings = FALSE)
+
+dba_obj <- dba.normalize(data.table::copy(dba_samples), normalize = DBA_NORM_LIB, method = DBA_DESEQ2)
+dba.normalize(dba_obj, bRetrieve=TRUE)
+perform_analyses(dba_obj, output_dir)
 
 
-print("Modeling study design based on Condition and performing the differential analysis")
-dba_samples <- dba.contrast(dba_samples, reorderMeta = list(Tissue = args$tissue_contrast), minMembers = 2)
-dba_samples <- dba.analyze(dba_samples)
+
+print("Normalizing based on RLE")
+output_dir <- file.path(args$outdir, "normalization_RLE")
+dir.create(output_dir, showWarnings = FALSE)
+
+dba_obj <- dba.normalize(data.table::copy(dba_samples), normalize = DBA_NORM_RLE, method = DBA_DESEQ2)
+dba.normalize(dba_obj, bRetrieve=TRUE)
+perform_analyses(dba_obj, output_dir)
 
 
-# Save plot as pdf
-print("Saving correlation heatmap generated using only significantly differentially bound sites as correlation_hm_peaks_significant.pdf")
-pdf(file.path(args$outdir, "correlation_hm_peaks_significant.pdf"))
-plot(dba_samples, contrast = 1)
-dev.off()
 
+print("Normalizing based on sequencing depth + BACKGROUND")
+output_dir <- file.path(args$outdir, "normalization_LibSize_Background")
+dir.create(output_dir, showWarnings = FALSE)
 
-print("Computing report of differentially bound sites...")
-dba_samples.DB <- dba.report(dba_samples)
-print(dba_samples.DB)
-
-
-# Write differentially bound sites to a file in a format easy to read for HOMER annotation tool
-db <- dba_samples.DB
-db$PeakId <- names(db)
-db <- data.frame(db)
-# Rename the first column 'seqnames' to 'Chr'
-names(db)[names(db) == "seqnames"] <- "Chr"
-# Reorder columns to move PeakId at the start and have the first columns as:
-# cols: Chr, start, end, PeakId, Fold, strand, Conc, Conc_BULK, Conc_TM4, p.value, FDR, width
-db <- db[, c(1, 2, 3, 12, 9, 5, 6, 7, 8, 10, 11, 4)]
-
-
-fwrite(db[db$Fold >= 0, ], file = file.path(args$outdir, "DER_TM4.bed"), sep = "\t")
-fwrite(db[db$Fold < 0, ], file = file.path(args$outdir, "DER_BULK.bed"), sep = "\t")
-
-conditions <- unique(dba_samples$Condition[dba_samples$Condition != args$tissue_contrast])
-num_enriched_sites_condition <- sprintf(
-    "Number of enriched sites in '%s' samples: %s",
-    paste(conditions, collapse = ", "),
-    sum(dba_samples.DB$Fold >= 0)
-)
-
-num_enriched_sites <- sprintf(
-    "Number of enriched sites in '%s' samples: %s",
-    args$tissue_contrast,
-    sum(dba_samples.DB$Fold < 0)
-)
-fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(args$outdir, "num_enriched_sites.txt"), quote = FALSE)
-
-
-print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
-pdf(file.path(args$outdir, "pca_read_counts.pdf"))
-dba.plotPCA(dba_samples, DBA_TISSUE, label = DBA_CONDITION)
-dev.off()
-
-
-print("Saving PCA plot of significantly differentially bound sites as pca_significant_sites.pdf")
-pdf(file.path(args$outdir, "pca_significant_sites.pdf"))
-dba.plotPCA(dba_samples, contrast = 1, label = DBA_TISSUE)
-dev.off()
-
-
-print("Saving PCA plot showing where the replicates for each of the unique tissues lies as pca_replicates_by_tissue.pdf")
-pdf(file.path(args$outdir, "pca_replicates_by_tissue.pdf"))
-dba.plotPCA(dba_samples, attributes = c(DBA_TISSUE, DBA_CONDITION), label = DBA_REPLICATE)
-dev.off()
-
-print("Saving MA plot of treated vs control samples as MA_treated_vs_control.pdf")
-pdf(file.path(args$outdir, "MA_treated_vs_control.pdf"))
-dba.plotMA(dba_samples)
-dev.off()
-
-
-print("Saving MA plot of treated vs control samples with concentration of each sample groups as MA_treated_vs_control_with_concentration.pdf")
-pdf(file.path(args$outdir, "MA_treated_vs_control_with_concentration.pdf"))
-dba.plotMA(dba_samples, bXY = TRUE)
-dev.off()
-
-
-print("Saving venn plot as venn_plot.pdf")
-pdf(file.path(args$outdir, "venn_plot.pdf"))
-dba.plotVenn(dba_samples, contrast = 1, bDB = TRUE, bGain = TRUE, bLoss = TRUE, bAll = FALSE)
-dev.off()
-
-
-print("Saving venn plot with all counts as venn_plot_all.pdf")
-pdf(file.path(args$outdir, "venn_plot_all.pdf"))
-dba.plotVenn(dba_samples, contrast = 1, bDB = TRUE, bGain = TRUE, bLoss = TRUE, bAll = TRUE)
-dev.off()
-
-
-print("Saving vulcano plot of log FoldChange as vulcano_plot.pdf")
-pdf(file.path(args$outdir, "vulcano_plot.pdf"))
-dba.plotVolcano(dba_samples)
-dev.off()
-
-
-print("Saving boxplot of concentration of treated vs control samples as boxplot_treated_vs_control.pdf")
-pdf(file.path(args$outdir, "boxplot_treated_vs_control.pdf"))
-pvals <- dba.plotBox(dba_samples)
-dev.off()
-fwrite(pvals, file = file.path(args$outdir, "pvals_boxplot.tsv"), sep = "\t", row.names = TRUE)
-
-
-print("Saving correlation heatmap of each binding site as correlation_hm_binding_sites.pdf")
-pdf(file.path(args$outdir, "correlation_hm_binding_sites.pdf"))
-hmap <- colorRampPalette(c("red", "black", "green"))(n = 13)
-dba.plotHeatmap(dba_samples, contrast = 1, correlations = FALSE, scale = "row", colScheme = hmap)
-dev.off()
-
-
-print("Saving profile plot of each binding site as profile_plot_binding_sites.pdf")
-pdf(file.path(args$outdir, "profile_plot_binding_sites.pdf"))
-profiles <- dba.plotProfile(dba_samples)
-dba.plotProfile(profiles)
-dev.off()
-
-
-print("Saving profile plot of each binding site of merged groups (TISSUE and REPLICATES) as profile_plot_group_binding_sites.pdf")
-pdf(file.path(args$outdir, "profile_plot_group_binding_sites.pdf"))
-profiles <- dba.plotProfile(dba_samples, merge = c(DBA_TISSUE, DBA_REPLICATE))
-dba.plotProfile(profiles)
-dev.off()
-
-
-print("Saving profile plot of each binding site of each sample as profile_plot_sample_binding_sites.pdf")
-pdf(file.path(args$outdir, "profile_plot_sample_binding_sites.pdf"))
-profiles <- dba.plotProfile(dba_samples, merge = NULL)
-dba.plotProfile(profiles)
-dev.off()
+dba_obj <- dba.normalize(data.table::copy(dba_samples), normalize = DBA_NORM_RLE, method = DBA_DESEQ2,  background=TRUE)
+dba.normalize(dba_obj, bRetrieve=TRUE)
+perform_analyses(dba_obj, output_dir)
