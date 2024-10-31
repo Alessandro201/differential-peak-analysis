@@ -293,19 +293,19 @@ perform_analyses <- function(dba_obj, output_dir) {
     fwrite(db[db$Fold >= 0, ], file = file.path(output_dir, "DER_TM4.bed"), sep = "\t")
     fwrite(db[db$Fold < 0, ], file = file.path(output_dir, "DER_BULK.bed"), sep = "\t")
 
-    conditions <- unique(dba_obj$Condition[dba_obj$Condition != args$tissue_contrast])
-    num_enriched_sites_condition <- sprintf(
-        "Number of enriched sites in '%s' samples: %s",
-        paste(conditions, collapse = ", "),
+    tissues_not_control <- unique(dba_obj$Tissue[dba_obj$Tissue != args$tissue_contrast])
+    num_enriched_sites_other <- sprintf(
+        "Number of enriched sites in Tissue='%s' samples: %s",
+        paste(tissues_not_control, collapse = ", "),
         sum(dba_samples.DB$Fold >= 0)
     )
 
-    num_enriched_sites <- sprintf(
-        "Number of enriched sites in '%s' samples: %s",
+    num_enriched_sites_control <- sprintf(
+        "Number of enriched sites in Tissue=%s samples: %s",
         args$tissue_contrast,
         sum(dba_samples.DB$Fold < 0)
     )
-    fwrite(list(paste(num_enriched_sites_condition, num_enriched_sites, sep = "\n")), file = file.path(output_dir, "num_enriched_sites.txt"), quote = FALSE)
+    fwrite(list(paste(num_enriched_sites_other, num_enriched_sites_control, sep = "\n")), file = file.path(output_dir, "num_enriched_sites.txt"), quote = FALSE)
 
 
     print("Saving PCA plot of normalized read counts as pca_read_counts.pdf")
