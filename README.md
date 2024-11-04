@@ -1,28 +1,28 @@
-# Differential Peak Analysis
+# Differential Peak Enrichment Analysis
 
-This repository contains utility scripts to perform differential peak analysis.
+This repository contains utility scripts to perform find Differentially Enriched Regions (DER).
 
 - `diffbind_analysis.R` uses [DiffBind](https://bioconductor.org/packages/release/bioc/html/DiffBind.html) to perform the differential analysis. It then saves relevant data and statistics, and produces plots.
 - `homer2igv.py` joins the peaks annotated with [HOMER](http://homer.ucsd.edu/homer/ngs/annotation.html) with the metadata produced by DiffBind (like FDR, pvalue, and log fold change) in a TSV file, and conveniently prepares a GTF file of the significant peaks (loadable as a track in [IGV](https://igv.org/), for example).
 
 ## Workflow
 
-1. Perform differential analysis of the samples in `samplesheet.csv` using `control` as the base condition and save the significant peaks and the plots in `diffbind_results/`.
+1. Perform differential analysis of the samples in `samplesheet.csv` using the TISSUE `control` as the base condition and save the significant peaks and the plots in `diffbind_results/`.
 
    ```bash
-   diffbind_analysis.R samplesheet.csv -o diffbind_results/ -c control
+   diffbind_analysis.R samplesheet.csv -o diffbind_results/ -t control
    ```
 
 2. Annotate the peaks with HOMER using the GRCh38 gencode_v46 annotated scaffold as reference. You can choose any GTF file as reference. For more information on the parameters refer to the official documentation of [HOMER](http://homer.ucsd.edu/homer/ngs/annotation.html).
 
    ```bash
-   annotatePeaks.pl diffbind_results/differentially_bound_sites.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > differentially_bound_sites_annotated.tsv
+   annotatePeaks.pl diffbind_results/DER_control.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > DER_control_annotated.tsv
    ```
 
 3. Join the two outputs
 
    ```bash
-   homer2igv.py -d diffbind_results/differentially_bound_sites.tsv differentially_bound_sites_annotated.tsv
+   homer2igv.py -d diffbind_results/DER_control.tsv DER_control_annotated.tsv
    ```
 
 ## Samplesheet preparation
@@ -45,7 +45,21 @@ control_3 ,tissue2 ,H3k4_me1 ,control   ,Full-Media ,3         ,cutandrun/result
 These are the parameters of `diffbind_analysis.R`:
 
 - `-o` is the output directory in which the significant peaks and the plots will be saved
-- `-c` defined the base condition, hence the denominator in the fold change. The defualt is `control`
+- `-t` defines the `TISSUE` that will be used as base condition, eg. the denominator in the fold change. The default is `BULK`
+- `-c` specify a samplesheet containing the consensus peakset. If given, diffbind will avoid computing its own consensus peakset.
+- `-b` specify the blacklist to use:
+   - `TRUE`: DEFAULT - Automatically inferr the blacklist to use
+   - `DBA_BLACKLIST_HG19`: Homo sapiens 19 (chromosomes have 'chr')
+   - `DBA_BLACKLIST_HG38`: Homo sapiens 38 (chromosomes have 'chr')
+   - `DBA_BLACKLIST_GRCH37`: Homo sapiens 37 (chromosomes are numbers)
+   - `DBA_BLACKLIST_GRCH38`: Homo sapiens 38 (chromosomes are numbers)
+   - `DBA_BLACKLIST_MM9`: Mus musculus 9
+   - `DBA_BLACKLIST_MM10`: Mus musculus 10
+   - `DBA_BLACKLIST_CE10`: C. elegans 10
+   - `DBA_BLACKLIST_CE11`: C. elegans 11
+   - `DBA_BLACKLIST_DM3`: Drosophila melanogaster 3
+   - `DBA_BLACKLIST_DM6`: Drosophila melanogaster 6
+- `-m` Defines the minimum number of replicates a peak must be in to be considered consensus. Used by diffbind to find a consensus peakset if not given
 - `-s` defines how the summit will be computed. DiffBind by default shortens the peaks around ±200bp from the summit, hence 401 total. Depending on the histon marks, it may be appropiate or not. Choices:
   - `-s INTEGER` choose a specific distance from the summit
   - `-s false` disable the centering of the peaks
@@ -54,28 +68,63 @@ These are the parameters of `diffbind_analysis.R`:
 ```text
 $ diffbind_analysis.R -h
 usage: diffbind_analysis.R [--] [--help] [--opts OPTS] [--outdir
-       OUTDIR] [--contrast CONTRAST] samplesheet
+       OUTDIR] [--tissue-contrast TISSUE-CONTRAST] [--summit SUMMIT]
+       [--blacklist BLACKLIST] [--minOverlap MINOVERLAP] [--consensus
+       CONSENSUS] samplesheet
 
 Launch DiffBind on the data and perform the plots
 
 positional arguments:
-  samplesheet     Samplesheet in csv format
+  samplesheet            Samplesheet in csv format
 
 flags:
-  -h, --help      show this help message and exit
+  -h, --help             show this help message and exit
 
 optional arguments:
-  -x, --opts      RDS file containing argument values
-  -o, --outdir    Output directory [default: .]
-  -c, --contrast  Set the baseline condition, eg. the denominator in
-                  the fold change [default: control]
-  -s, --summit    Re-center each peak interval around its point of
-                  highest pileup.  '--summit 200' will select -200/+200
-                  bp around the point of highest pileup giving peaks of
-                  401bp.  '--summit false' will disable the
-                  re-centering.  '--summit median' will create peaks
-                  about the median peak size of all samples.  Choices:
-                  ['false', 'median', INTEGER] [default: 200]
+  -x, --opts             RDS file containing argument values
+  -o, --outdir           Output directory [default: .]
+  -t, --tissue-contrast  Set the baseline condition, eg. the
+                         denominator in the fold change. You should
+                         have two distinct tissues, and you should
+                         specify the one you want as baseline
+                         [default: BULK]
+  -s, --summit           Re-center each peak interval around its point
+                         of highest pileup.  '--summit 200' will select
+                         -200/+200 bp around the point of highest
+                         pileup giving peaks of 401bp.  '--summit
+                         false' will disable the re-centering.
+                         '--summit median' will create peaks about the
+                         median peak size of ALL SAMPLES. THERE WILL BE
+                         NO DISTINCTION BETWEEN CONDITION, TISSUE OR
+                         ANY OTHER METRIC.  Choices: ['false',
+                         'median', INTEGER] [default: 200]
+  -b, --blacklist        Apply the ENCODE blacklist to the peaks.
+                         Choices: 'TRUE': automatically infer the
+                         genome and use the corresponding ENCODE
+                         blacklist 'FALSE': does not apply a blacklist
+                         'DBA_BLACKLIST_HG19': Homo sapiens 19
+                         (chromosomes have 'chr') 'DBA_BLACKLIST_HG38':
+                         Homo sapiens 38 (chromosomes have 'chr')
+                         'DBA_BLACKLIST_GRCH37': Homo sapiens 37
+                         (chromosomes are numbers)
+                         'DBA_BLACKLIST_GRCH38': Homo sapiens 38
+                         (chromosomes are numbers) 'DBA_BLACKLIST_MM9':
+                         Mus musculus 9 'DBA_BLACKLIST_MM10': Mus
+                         musculus 10 'DBA_BLACKLIST_CE10': C. elegans
+                         10 'DBA_BLACKLIST_CE11': C. elegans 11
+                         'DBA_BLACKLIST_DM3': Drosophila melanogaster 3
+                         'DBA_BLACKLIST_DM6': Drosophila melanogaster 6
+                         [default: TRUE]
+  -m, --minOverlap       Set the minimum number of replicates a peak
+                         must be in to be considered consensus.  If
+                         it's between 0 and 1, peaks will be included
+                         if they are present in at least this
+                         proportion of replicates.  [default: 2]
+  -c, --consensus        Specify a samplesheet containing the consensus
+                         peakset for each of the Tissue in the
+                         Samplesheet. It will be used instead of the
+                         one generated by diffbind. Incompatible with
+                         --minOverlap.
 ```
 
 ```text
@@ -125,11 +174,12 @@ To perform the analysis on the current directory, using the samplesheet from the
 # │       └── 03_peak_calling/
 # │           └── ...
 # ├── samplesheet.csv
+# ├── consensus_samplesheet.csv
 # └── gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz
 
-docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis diffbind_analysis.R samplesheet.csv -o diffbind_results/ -c control
-docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis bash -c 'annotatePeaks.pl diffbind_results/differentially_bound_sites.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > differentially_bound_sites_annotated.tsv'
-docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis homer2igv.py -d diffbind_results/differentially_bound_sites.tsv differentially_bound_sites_annotated.tsv
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis ./diffbind_analysis.R samplesheet.csv -o diffbind_results/ -t control -c consensus_samplesheet.csv
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis bash -c 'annotatePeaks.pl diffbind_results/DER_control.tsv hg38 -gtf gencode.v46.chr_patch_hapl_scaff.annotation.gtf.gz > DER_control_annotated.tsv'
+docker run --rm -it -v .:/mnt -w /mnt alessandro201/differential-peak-analysis homer2igv.py -d diffbind_results/DER_contorl.tsv DER_control_annotated.tsv
 ```
 
 > [!NOTE]
@@ -145,38 +195,26 @@ cd differential-peak-analysis
 docker build -t IIT/differential-peak-analysis . --platform=linux/amd64
 ```
 
-### PIXI (Conda) environment
-
-If you don't want to build a docker container, the recommended way to install all the dependencies is to use the [PIXI](https://github.com/prefix-dev/pixi) package manager, which is built on the conda ecosystem but is faster and better than conda.
-
-```bash
-git clone https://github.com/Alessandro201/differential-peak-analysis.git
-cd differential-peak-analysis
-pixi shell
-```
-
-Alternatively with conda:
-
+### Conda environment
+If you don't want to create or use a docker container you can install the environment with conda (or mamba or micromamba):
 ```bash
 git clone https://github.com/Alessandro201/differential-peak-analysis.git
 cd differential-peak-analysis
 conda env create -f env.yml
 conda activate differential-analysis
-```
 
-Install other necessary R dependencies:
-```bash
+# Install other necessary R dependencies:
 Rscript install_dependencies.R
-```
 
-Install the reference genome for HOMER:
+# Activate the environment with conda, mamba or micromamba
+micromamba activate differential-analysis
 
-```bash
-.pixi/envs/default/share/homer/configureHomer.pl -install hg38
+# Install the reference genome for HOMER:
+$CONDA_PREFIX/share/homer/configureHomer.pl -install hg38
 ```
 
 > [!NOTE]
-> Depending on the package manager or how you installed HOMER, `configureHomer.pl` could be in different locations.
+> Depending on the package manager or how you installed HOMER, `configureHomer.pl` could be in different locations. 
 
 ### Dependencies
 
@@ -198,7 +236,3 @@ The Python script `homer2igv.py` depends on:
 To use HOMER you need to:
 
 - Install [HOMER](http://homer.ucsd.edu/homer/introduction/install.html)
-- Install the reference genome for HOMER with:
-  ```bash
-  configureHomer.pl -install hg38
-  ```
