@@ -419,6 +419,15 @@ print("Normalizing based on sequencing depth + BACKGROUND")
 output_dir <- file.path(args$outdir, "normalization_LibSize_Background")
 dir.create(output_dir, showWarnings = FALSE)
 
+dba_obj <- dba.normalize(data.table::copy(dba_samples), normalize = DBA_NORM_LIB, method = DBA_DESEQ2,  background=TRUE)
+dba.normalize(dba_obj, bRetrieve=TRUE)
+perform_analyses(dba_obj, output_dir)
+
+
+print("Normalizing based on RLE + BACKGROUND")
+output_dir <- file.path(args$outdir, "normalization_RLE_Background")
+dir.create(output_dir, showWarnings = FALSE)
+
 dba_obj <- dba.normalize(data.table::copy(dba_samples), normalize = DBA_NORM_RLE, method = DBA_DESEQ2,  background=TRUE)
 dba.normalize(dba_obj, bRetrieve=TRUE)
 perform_analyses(dba_obj, output_dir)
