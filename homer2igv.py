@@ -132,6 +132,9 @@ if "source" not in df.columns:
 if "frame" not in df.columns:
     df["frame"] = "-"
 
+if "distance_to_tss" not in df.columns:
+    df["distance_to_tss"] = "-"
+
 if "feature" not in df.columns:
     # The annotation is usually like "intron (ENST..., intron 1 of 4)"
     # I want to keep only the first word thus "intron", "exon", "CDS", ...
@@ -158,7 +161,7 @@ if args.pvalue:
     df = df[-np.log10(df["p.value"]) >= args.pvalue]
 
 if args.tss:
-    df = df[df["tss"].abs() <= args.tss]
+    df = df[df["distance_to_tss"].abs() <= args.tss]
 
 if args.type:
     df = df[df["feature"] in args.type.split(",")]
