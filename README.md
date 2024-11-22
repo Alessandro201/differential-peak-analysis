@@ -56,7 +56,7 @@ control_2 ,tissue2 ,H3K4_me1 ,control   ,Full-Media ,2         ,cutandrun/result
 control_3 ,tissue2 ,H3K4_me1 ,control   ,Full-Media ,3         ,cutandrun/results/02_alignment/bowtie2/target/markdup/control_3.target.markdup.sorted.bam ,cutandrun/results/03_peak_calling/04_called_peaks/macs2/control_3.macs2.peaks.cut.bed.gz ,bed
 ```
 
-If you wish to use consensus samples, they need to be specified in a different samplesheet that follows the same format as the above. Be sure to use the same SampleID for the samples and the corresponding consensus.
+If you wish to use consensus samples, they need to be specified in a different samplesheet that follows the same format as the above. A sample in the consensus samplesheet will be considered the consensus of the samples that share the same TISSUE.
 
 ## Parameters
 
