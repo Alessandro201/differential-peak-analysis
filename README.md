@@ -197,7 +197,7 @@ To perform the analysis on the current directory, using the samplesheet from the
 
 ```bash
 # CURRENT_DIRECTORY/
-# ├── differential-peak-analysis               # [THIS_REPO]
+# ├── differential-peak-analysis/               # [THIS_REPO]
 # │       ├── homer2gtf.py
 # │       ├── diffbind_analysis.R
 # │       └── ...
@@ -224,7 +224,7 @@ Or with singularity
 ```bash
 # CURRENT_DIRECTORY/
 # ├── differential-peak-analysis_latest.sif    # [singularity image]
-# ├── differential-peak-analysis               # [THIS_REPO]
+# ├── differential-peak-analysis/              # [THIS_REPO]
 # │       ├── homer2gtf.py
 # │       ├── diffbind_analysis.R
 # │       └── ...
