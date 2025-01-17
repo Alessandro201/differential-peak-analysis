@@ -71,7 +71,7 @@ filters.add_argument(
 argparser.add_argument(
     "-o",
     "--output",
-    nargs="?",
+    default="./",
     type=str,
     help="Outputs name. Use a trailing slash to place the outputs in a directory. Default: 'homer2igv_results/'",
 )
@@ -92,12 +92,29 @@ if diffbind_file and not diffbind_file.exists():
     print(f"The diffbind file given does not exist: {diffbind_file}")
     exit(1)
 
+if not args.output:
+    print("You have to either give an output or let the default one.")
+    exit(1)
+
 if args.output[-1] == os.sep:  # Directory
     output_name = Path(args.output, input_file)
 else:
     output_name = Path(args.output)
+
 output_name.parent.mkdir(exist_ok=True, parents=True)
 
+bed_output = output_name.name + ".bed"
+tsv_output = output_name.name + ".tsv"
+gtf_output = output_name.name + ".gtf"
+if Path(tsv_output).exists():
+    print(f'Output "{tsv_output}" already exists')
+    exit(1)
+if Path(bed_output).exists():
+    print(f'Output "{bed_output}" already exists')
+    exit(1)
+if Path(gtf_output).exists():
+    print(f'Output "{gtf_output}" already exists')
+    exit(1)
 
 # Defer the slow import of pandas and numpy to after the arguments are parsed
 import pandas as pd
@@ -169,16 +186,31 @@ if args.type:
 if args.no_type:
     df = df[df["feature"] not in args.no_type.split(",")]
 
-tsv_output = output_name.with_suffix(".tsv")
-print(f"TSV file saved: {tsv_output}")
-df.to_csv(
+df_bed = df[["chr", "start", "end", "peakid", "peak_score", "strand"]]
+with open(bed_output, "a") as f:
+    # Bed does not accept the headers, so i write them in a comment
+    f.write("# chr, start, end, peakid, peak_score, strand\n")
+    df_bed.to_csv(
+        f,
+        sep="\t",
+        header=False,
+        index=False,
+        encoding="utf-8",
+    )
+print(f"BED file saved: {bed_output}")
+
+df_tsv = df[
+    ["chr", "start", "end", "peakid"] + 
+    [col for col in df if col not in ["chr", "start", "end", "peakid"]]
+    ]
+df_tsv.to_csv(
     tsv_output,
     sep="\t",
     header=True,
     index=False,
     encoding="utf-8",
 )
-
+print(f"TSV file saved: {tsv_output}")
 
 ### Prepare database to be written
 # get name of columns to be added in the `attribute` column: (all - list_below)
@@ -213,6 +245,5 @@ df = df[
         "attribute",
     ]
 ]
-gtf_output = output_name.with_suffix(".gtf")
 print(f"GTF file saved: {gtf_output}")
 df.to_csv(gtf_output, sep="\t", header=False, index=False, encoding="utf-8")
